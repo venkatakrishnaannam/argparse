@@ -18,8 +18,19 @@ static char *to_upper(const char *name)
 	return c;
 }
 
-int add_option(struct Options *opts, const char sname, char *name,
-	       	char *lname, char *desc, bool req, bool is_flag)
+Options new_options()
+{
+	Options opts = malloc(sizeof *opts);
+	*opts = (struct Options){
+		.opts = NULL,
+		.num_req = 0,
+		.num_opts = 0
+	};
+	return opts;
+}
+
+int add_option(Options opts, const char sname, char *name,
+		char *lname, char *desc, bool req, bool is_flag)
 {
 	if ((sname < 'A' || sname > 'z') || (sname > 'Z' && sname < 'a')) {
 		printf("Invalid option short name\n");
@@ -47,7 +58,7 @@ int add_option(struct Options *opts, const char sname, char *name,
 	return 0;
 }
 
-void print_help(const struct Options *opts,const char *progname)
+void print_help(const Options opts,const char *progname)
 {
 	int num_opts = opts->num_opts;
 	struct Option opt;
@@ -106,13 +117,12 @@ static int parse_arg(struct Option *opt, struct Arg *arg, int argc, char **argv)
 		arg->value = argv[i+1];
 		return 0;
 	}
-	printf("not found\n");
 	if (opt->is_flag || !opt->req)
 		return 1;
 	return -1;
 }
 
-struct Args *parse_args(const struct Options *opts,
+struct Args *parse_args(const Options opts,
 		const int argc, char **argv)
 {
 	struct Args *args = (struct Args *) malloc (sizeof (struct Args));
@@ -133,7 +143,7 @@ struct Args *parse_args(const struct Options *opts,
 	return args;
 }
 
-char *get_arg(const struct Args *args, const char sname, const char *name)
+char *get_arg(const Args args, const char sname, const char *name)
 {
 	if (sname == 0 && name == NULL)
 		return NULL;
@@ -153,4 +163,11 @@ char *get_arg(const struct Args *args, const char sname, const char *name)
 		}
 	}
 	return NULL;
+}
+
+void print_args(struct Args *args)
+{
+    for (int i = 0; i < args->num_args; i++)
+        if (args->args[i].opt->is_flag == false)
+            printf("-%c %s\n", args->args[i].opt->sname, args->args[i].value);
 }
